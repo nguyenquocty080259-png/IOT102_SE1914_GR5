@@ -1,0 +1,101 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #1b8f6b;
+}
+
+/* LAYOUT */
+.main {
+  display: flex;
+  height: 100vh;
+  gap: 10px;
+  padding: 10px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  flex: 1;
+}
+
+/* STATUS */
+.status-card {
+  max-width: 350px;
+}
+
+/* RIGHT */
+.control-card {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+}
+
+/* TAB */
+.tabs {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  cursor: pointer;
+  background: #ccc;
+  font-weight: bold;
+}
+
+.tabs button.active {
+  background: #2e7d32;
+  color: white;
+}
+
+/* CONTENT */
+.hidden {
+  display: none;
+}
+
+/* BUTTON */
+button {
+  padding: 12px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: none;
+  background: #2e7d32;
+  color: white;
+  font-weight: bold;
+}
+
+/* PUMP BOX */
+#pumpControlBox {
+  margin-top: 10px;
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .main {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .status-card {
+    max-width: 100%;
+  }
+}
+.chart-box {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 10px auto;
+}
+
+#moisture {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  font-weight: bold;
+}

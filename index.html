@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Smart Irrigation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="main">
+      <!-- LEFT: STATUS -->
+      <div class="card status-card">
+        <h2>📊 SYSTEM STATUS</h2>
+
+        <div class="chart-box">
+          <canvas id="moistureChart"></canvas>
+          <div id="moisture">0%</div>
+        </div>
+        <p>⚙️ Mode: <span id="mode">AUTO</span></p>
+        <p>💧 Pump: <span id="pump">OFF</span></p>
+        <p>🧠 State: <span id="state">IDLE</span></p>
+        <p>📡 Status: <span id="status">OK</span></p>
+
+        <hr />
+
+        <h3>Config</h3>
+        <p>Min: <span id="minM">--</span>%</p>
+        <p>Max: <span id="maxM">--</span>%</p>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="card control-card">
+        <!-- TAB -->
+        <div class="tabs">
+          <button id="tabControl" class="active">CONTROL</button>
+          <button id="tabPlant">PLANT SETUP</button>
+        </div>
+
+        <!-- CONTROL CONTENT -->
+        <div id="controlContent">
+          <button id="autoBtn">AUTO</button>
+          <button id="manualBtn">MANUAL</button>
+
+          <div id="pumpControlBox">
+            <button id="pumpOn">PUMP ON</button>
+            <button id="pumpOff">PUMP OFF</button>
+          </div>
+        </div>
+
+        <!-- PLANT CONTENT -->
+        <div id="plantContent" class="hidden">
+          <select id="type">
+            <option value="0.9">Ăn lá</option>
+            <option value="0.8">Ăn quả</option>
+          </select>
+
+          <select id="leaf">
+            <option value="0.1">Mỏng</option>
+            <option value="0">Trung</option>
+          </select>
+
+          <select id="root">
+            <option value="5">Nông</option>
+            <option value="0">TB</option>
+          </select>
+
+          <select id="stage">
+            <option value="0.8">Cây con</option>
+            <option value="1.2">Ra hoa</option>
+          </select>
+
+          <button id="calcBtn">TÍNH</button>
+          <p id="result"></p>
+          <button id="saveBtn">LƯU</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
