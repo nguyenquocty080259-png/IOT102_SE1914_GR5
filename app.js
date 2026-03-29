@@ -6,6 +6,8 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+
 // ================= CHART =================
 const ctx = document.getElementById('moistureChart').getContext('2d');
 
@@ -19,36 +21,32 @@ const moistureChart = new Chart(ctx, {
   },
   options: {
     cutout: '70%',
-    plugins: {
-      legend: { display: false }
-    }
+    plugins: { legend: { display: false } }
   }
 });
 
+
 // ================= DOM =================
-// STATUS
 const moistureEl = document.getElementById('moisture');
 const modeEl = document.getElementById('mode');
 const pumpEl = document.getElementById('pump');
 const stateEl = document.getElementById('state');
 const statusEl = document.getElementById('status');
+
 const minEl = document.getElementById('minM');
 const maxEl = document.getElementById('maxM');
 
-// TAB
 const tabControl = document.getElementById('tabControl');
 const tabPlant = document.getElementById('tabPlant');
 const controlContent = document.getElementById('controlContent');
 const plantContent = document.getElementById('plantContent');
 
-// CONTROL
 const autoBtn = document.getElementById('autoBtn');
 const manualBtn = document.getElementById('manualBtn');
 const pumpOnBtn = document.getElementById('pumpOn');
 const pumpOffBtn = document.getElementById('pumpOff');
 const pumpBox = document.getElementById('pumpControlBox');
 
-// PLANT
 const type = document.getElementById('type');
 const leaf = document.getElementById('leaf');
 const root = document.getElementById('root');
@@ -57,12 +55,67 @@ const calcBtn = document.getElementById('calcBtn');
 const saveBtn = document.getElementById('saveBtn');
 const resultEl = document.getElementById('result');
 
+const alarmBox = document.getElementById('alarmBox');
 
-// ================= TAB SWITCH =================
+
+// ================= SOUND =================
+const sound = new Audio("https://tiengdong.com/tieng-coi-canh-bao?utm_source=copylink&utm_medium=share_button&utm_campaign=shared_from_tiengdong.com&utm_content=vi-20h29-29-03-2026");
+sound.loop = true;
+
+let soundEnabled = false;
+
+// 🔓 AUTO UNLOCK bằng click bất kỳ
+function unlockSound() {
+  if (soundEnabled) return;
+
+  sound.play().then(() => {
+    sound.pause();
+    sound.currentTime = 0;
+    soundEnabled = true;
+    console.log("🔓 Sound unlocked");
+  }).catch(() => {
+    console.log("❌ Unlock failed");
+  });
+}
+
+document.addEventListener('click', unlockSound, { once: true });
+document.addEventListener('touchstart', unlockSound, { once: true });
+
+
+// ================= ALARM =================
+let alarmActive = false;
+let alarmTimeout = null;
+
+function startAlarm() {
+  if (alarmActive) return;
+
+  alarmActive = true;
+
+  alarmBox.classList.remove('hidden');
+  document.body.classList.add('alarm-bg');
+
+  if (soundEnabled) {
+    sound.play().catch(() => {});
+  } else {
+    console.log("⚠️ Sound chưa unlock");
+  }
+}
+
+function stopAlarm() {
+  alarmActive = false;
+
+  alarmBox.classList.add('hidden');
+  document.body.classList.remove('alarm-bg');
+
+  sound.pause();
+  sound.currentTime = 0;
+}
+
+
+// ================= TAB =================
 tabControl.onclick = () => {
   controlContent.classList.remove('hidden');
   plantContent.classList.add('hidden');
-
   tabControl.classList.add('active');
   tabPlant.classList.remove('active');
 };
@@ -70,99 +123,8 @@ tabControl.onclick = () => {
 tabPlant.onclick = () => {
   plantContent.classList.remove('hidden');
   controlContent.classList.add('hidden');
-
   tabPlant.classList.add('active');
   tabControl.classList.remove('active');
-};
-
-
-// ================= REALTIME SENSOR =================
-db.ref('sensor/moisture_percent').on('value', snap => {
-  let val = snap.val() ?? 0;
-  val = Math.max(0, Math.min(100, val));
-
-  moistureEl.innerText = val + "%";
-
-  // ===== LẤY CONFIG =====
-  let min = parseInt(minEl.innerText) || 40;
-  let max = parseInt(maxEl.innerText) || 70;
-
-  // ===== MÀU =====
-  let color = "green";
-
-  if (val < min) color = "orange";   // DRY
-  else if (val > max) color = "blue"; // WET
-
-  // ===== UPDATE CHART =====
-  moistureChart.data.datasets[0].data = [val, 100 - val];
-  moistureChart.data.datasets[0].backgroundColor = [color, "#eee"];
-  moistureChart.update();
-
-  // ===== TEXT COLOR =====
-  moistureEl.style.color = color;
-});
-
-
-// ================= SYSTEM STATUS =================
-db.ref('system').on('value', snap => {
-  const d = snap.val() || {};
-
-  // Pump
-  pumpEl.innerText = d.pump_state ? "ON" : "OFF";
-  pumpEl.style.color = d.pump_state ? "green" : "gray";
-
-  // Status
-  statusEl.innerText = d.status || "OK";
-
-  if (d.status === "ERROR") {
-    statusEl.style.color = "red";
-  } else if (d.status?.includes("MANUALTOAUTO")) {
-    statusEl.style.color = "orange";
-  } else {
-    statusEl.style.color = "green";
-  }
-
-  // State (nếu ESP có gửi)
-  stateEl.innerText = d.state || "IDLE";
-});
-
-
-// ================= MODE =================
-db.ref('control/manual').on('value', snap => {
-  const isManual = snap.val() || false;
-
-  modeEl.innerText = isManual ? "MANUAL" : "AUTO";
-  modeEl.style.color = isManual ? "orange" : "green";
-
-  // 🔥 ẨN/HIỆN PUMP CONTROL
-  pumpBox.style.display = isManual ? "block" : "none";
-});
-
-
-// ================= CONFIG =================
-db.ref('config').on('value', snap => {
-  const d = snap.val() || {};
-
-  minEl.innerText = d.minMoisture ?? "--";
-  maxEl.innerText = d.maxMoisture ?? "--";
-});
-
-
-// ================= CONTROL BUTTON =================
-autoBtn.onclick = () => {
-  db.ref('control/manual').set(false);
-};
-
-manualBtn.onclick = () => {
-  db.ref('control/manual').set(true);
-};
-
-pumpOnBtn.onclick = () => {
-  db.ref('control/pump').set(true);
-};
-
-pumpOffBtn.onclick = () => {
-  db.ref('control/pump').set(false);
 };
 
 
@@ -176,7 +138,6 @@ calcBtn.onclick = () => {
   const rootVal = parseFloat(root.value);
   const stageVal = parseFloat(stage.value);
 
-  // công thức chuẩn theo bạn
   const kc = (base + leafVal) * stageVal;
 
   minM = Math.round(30 + kc * 20 + rootVal);
@@ -197,8 +158,96 @@ saveBtn.onclick = () => {
 };
 
 
-// ================= SYNC INIT =================
-// đảm bảo UI đúng ngay khi load
+// ================= CONTROL =================
+autoBtn.onclick = () => db.ref('control/manual').set(false);
+manualBtn.onclick = () => db.ref('control/manual').set(true);
+pumpOnBtn.onclick = () => db.ref('control/pump').set(true);
+pumpOffBtn.onclick = () => db.ref('control/pump').set(false);
+
+
+// ================= SENSOR =================
+db.ref('sensor/moisture_percent').on('value', snap => {
+  let val = snap.val() ?? 0;
+  val = Math.max(0, Math.min(100, val));
+
+  moistureEl.innerText = val + "%";
+
+  const min = parseInt(minEl.innerText) || 40;
+  const max = parseInt(maxEl.innerText) || 70;
+
+  let color = "green";
+  if (val < min) color = "orange";
+  else if (val > max) color = "blue";
+
+  moistureChart.data.datasets[0].data = [val, 100 - val];
+  moistureChart.data.datasets[0].backgroundColor = [color, "#eee"];
+  moistureChart.update();
+
+  moistureEl.style.color = color;
+});
+
+
+// ================= SYSTEM =================
+db.ref('system').on('value', snap => {
+  const d = snap.val() || {};
+
+  pumpEl.innerText = d.pump_state ? "ON" : "OFF";
+  pumpEl.style.color = d.pump_state ? "green" : "gray";
+
+  statusEl.innerText = d.status || "OK";
+
+  if (d.status === "ERROR") {
+    statusEl.style.color = "red";
+
+    // ⏱ delay 3s chống báo giả
+    if (!alarmTimeout && !alarmActive) {
+      alarmTimeout = setTimeout(() => {
+        startAlarm();
+      }, 3000);
+    }
+
+  } else {
+    statusEl.style.color = "green";
+
+    // clear delay
+    if (alarmTimeout) {
+      clearTimeout(alarmTimeout);
+      alarmTimeout = null;
+    }
+
+    // tắt alarm
+    if (alarmActive) {
+      stopAlarm();
+    }
+  }
+
+  stateEl.innerText = d.state || "IDLE";
+});
+
+
+// ================= MODE =================
+db.ref('control/manual').on('value', snap => {
+  const isManual = snap.val() || false;
+
+  modeEl.innerText = isManual ? "MANUAL" : "AUTO";
+  modeEl.style.color = isManual ? "orange" : "green";
+
+  pumpBox.style.display = isManual ? "block" : "none";
+
+  autoBtn.disabled = !isManual;
+  manualBtn.disabled = isManual;
+});
+
+
+// ================= CONFIG =================
+db.ref('config').on('value', snap => {
+  const d = snap.val() || {};
+  minEl.innerText = d.minMoisture ?? "--";
+  maxEl.innerText = d.maxMoisture ?? "--";
+});
+
+
+// ================= INIT =================
 window.onload = () => {
   plantContent.classList.add('hidden');
 };
